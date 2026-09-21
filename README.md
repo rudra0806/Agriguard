@@ -78,6 +78,7 @@ Crop-Specific Evidence
           ▼
  Evidence Trace + Advisory
 
+```
  ## 🧑‍🌾 How to Use
 
 ### 1. Start the server
