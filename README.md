@@ -77,3 +77,39 @@ Crop-Specific Evidence
           │
           ▼
  Evidence Trace + Advisory
+
+ ## 🧑‍🌾 How to Use
+
+1. Start the AgriGuard server:
+
+```bash
+node server.js
+Open the application in your browser:
+http://localhost:3000/crop-advisory-prototype.html
+Enter the required information:
+Crop: Select or enter the crop being affected.
+Location: Enter the farming location or region.
+Symptoms: Describe the visible symptoms observed on the crop.
+Fetch the live weather information for the selected location.
+Submit the crop symptoms for analysis.
+AgriGuard retrieves the most relevant agricultural evidence using semantic similarity.
+The system combines the retrieved evidence with live weather conditions to calculate a risk indication.
+The AI generates a grounded advisory based on the selected agricultural evidence and weather context.
+Review the result, including:
+Risk level
+Evidence similarity
+Weather compatibility
+Baseline severity
+Recommended actions
+Evidence source
+Selection reason
+If the symptoms do not sufficiently match the available agricultural evidence, AgriGuard displays a No Reliable Match message instead of forcing an unsupported result.
+Example Input
+Crop: Cotton
+
+Location: Jodhpur, Rajasthan
+
+Symptoms:
+Holes appearing in cotton bolls with caterpillar-like larvae feeding inside.
+
+The system then retrieves relevant evidence and displays the corresponding risk indication, weather information, advisory, and evidence trace.
