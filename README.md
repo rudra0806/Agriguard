@@ -1,50 +1,79 @@
-# AgriGuard — Local Setup
+# 🌱 AgriGuard — AI-Powered Climate-Resilient Crop Risk Advisory System
 
-This runs the prototype with a **real, working AI call**, on your own laptop.
+AgriGuard is an AI-powered crop risk advisory system designed to help farmers understand potential crop risks using **Semantic Retrieval-Augmented Generation (RAG)**, agricultural evidence, and live weather conditions.
 
-## Why this structure?
-Calling an AI model directly from a browser file isn't possible without exposing
-your API key to anyone who views the page source — browsers block it for exactly
-this reason. So this project has two small pieces:
-- `public/crop-advisory-prototype.html` — the app you interact with
-- `server.js` — a tiny local server that holds your API key privately and
-  forwards requests to the AI on your behalf
+The system combines farmer-reported symptoms with crop-specific agricultural knowledge and current weather information to provide a clear, evidence-based risk indication.
 
-## Setup (one-time)
+> ⚠️ AgriGuard provides a risk indication and advisory based on available evidence. It is not a confirmed agricultural diagnosis.
 
-1. Install Node.js if you don't have it: https://nodejs.org (LTS version)
-2. Get a free Anthropic API key: https://console.anthropic.com/settings/keys
-   (sign up gives you a small amount of free credit — plenty for a demo)
-3. Open a terminal in this folder and run:
-   ```
-   npm install
-   ```
+---
 
-## Run it
+## 🎯 Problem Statement
 
-Set your API key and start the server (pick the line for your OS):
+Small and marginal farmers can face crop losses due to pests, diseases, and changing weather conditions.
 
-**Mac/Linux:**
-```
-export ANTHROPIC_API_KEY=your-key-here
-npm start
-```
+Generic agricultural advice may not always match the crop, symptoms, or local environmental conditions observed by a farmer.
 
-**Windows (PowerShell):**
-```
-$env:ANTHROPIC_API_KEY="your-key-here"
-npm start
-```
+AgriGuard addresses this by combining:
 
-Then open: **http://localhost:3000/crop-advisory-prototype.html**
+- Crop-specific agricultural evidence
+- Semantic similarity-based retrieval
+- Live weather information
+- AI-generated grounded advisory
+- Transparent evidence tracing
 
-## Live weather
-The "Fetch live weather" button calls Open-Meteo (free, no key needed) — it
-should work as soon as the page loads, even before you set up the API key.
-If it fails, open your browser's DevTools (F12) → Console tab and check the
-exact error message.
+---
 
-## If you don't want to get an API key right now
-The app still works without one — every advisory just falls back to the
-pre-written guidance text instead of a freshly generated one, and the retrieval
-+ risk-scoring logic (the "agent" part) still runs exactly the same either way.
+## 💡 Solution
+
+The farmer provides:
+
+- Crop name
+- Location
+- Observed symptoms
+
+AgriGuard then:
+
+1. Converts the farmer's query into a semantic representation.
+2. Retrieves relevant crop-specific agricultural evidence.
+3. Calculates semantic similarity between the symptoms and available evidence.
+4. Fetches live weather conditions.
+5. Combines evidence similarity, baseline severity, and weather compatibility to determine a risk level.
+6. Generates a grounded advisory using the selected agricultural evidence.
+7. Displays an evidence trace explaining why the result was selected.
+
+---
+
+## 🤖 AI & RAG Architecture
+
+```text
+Farmer Input
+     │
+     ├── Crop
+     ├── Location
+     └── Symptoms
+          │
+          ▼
+   Semantic Retrieval
+          │
+          ▼
+   Gemini Embeddings
+          │
+          ▼
+Crop-Specific Evidence
+          │
+          ├──────────────► Semantic Similarity
+          │
+          ▼
+    Live Weather Data
+     (Open-Meteo)
+          │
+          ▼
+   Risk Assessment
+          │
+          ▼
+   Grounded AI Advisory
+     (Gemini 2.5 Flash)
+          │
+          ▼
+ Evidence Trace + Advisory
