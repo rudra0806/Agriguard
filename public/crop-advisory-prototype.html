@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agriguard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#102019; --panel:#172d22; --panel-alt:#193225; --border:#294938;
+    --gold:#e1ae21; --teal:#48c5bb; --text:#f3f1e8; --muted:#a9b9ae;
+    --low:#79b978; --med:#e1ae21; --high:#d25b48;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;line-height:1.5}
+  .wrap{max-width:1280px;margin:0 auto;padding:28px 26px 52px}
+  header{padding-bottom:22px;border-bottom:1px solid var(--border);margin-bottom:28px}
+  header h1{font-family:'IBM Plex Serif',serif;font-size:2rem;font-weight:600;margin:0;letter-spacing:.2px}
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:26px;align-items:stretch}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.wrap{padding:20px 16px 40px}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:26px}
+  .panel h2{font-family:'IBM Plex Serif',serif;font-size:1.35rem;margin:0 0 22px}
+  label{display:block;font-size:.86rem;color:var(--muted);margin:16px 0 7px}
+  label:first-of-type{margin-top:0}
+  select,textarea,input[type=text]{width:100%;background:var(--panel-alt);border:1px solid var(--border);color:var(--text);padding:11px 12px;border-radius:7px;font:inherit;font-size:.95rem}
+  textarea{resize:vertical;min-height:92px}
+  select:focus,textarea:focus,input:focus{outline:none;border-color:var(--teal)}
+  .row{display:flex;gap:10px}.row input{flex:1;min-width:0}
+  button{font-family:inherit;cursor:pointer}
+  .secondary{background:transparent;border:1px solid var(--teal);color:var(--teal);padding:10px 13px;border-radius:7px;font-size:.86rem;white-space:nowrap}
+  .secondary:hover{background:rgba(72,197,187,.08)}
+  .weather-status{margin-top:9px;min-height:21px;color:var(--muted);font-size:.82rem}
+  .weather-status.live{color:var(--teal)}.weather-status.err{color:var(--high)}
+  .weather-line{display:flex;gap:8px;align-items:center}
+  .sun{font-size:1.25rem}
+  .primary{width:100%;margin-top:22px;background:var(--gold);color:#181305;border:0;padding:13px;border-radius:7px;font-weight:600;font-size:1rem}
+  .primary:hover{filter:brightness(1.06)}.primary:disabled{opacity:.6;cursor:wait}
+
+  .advisory-panel{min-height:100%}
+  .advisory-card{background:var(--panel-alt);border:1px solid var(--border);border-radius:12px;padding:22px;margin-top:4px}
+  .risk-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:18px}
+  .leaf{font-size:2.3rem;line-height:1;color:#8de2bb}
+  .risk-badge{font-family:'IBM Plex Serif',serif;font-weight:600;font-size:1.05rem;padding:6px 13px;border-radius:7px}
+  .risk-low{background:rgba(121,185,120,.17);color:var(--low)}
+  .risk-med{background:rgba(225,174,33,.18);color:var(--med)}
+  .risk-high{background:rgba(210,91,72,.18);color:var(--high)}
+  .disease-title{font-family:'IBM Plex Serif',serif;font-size:1.25rem;font-weight:600}
+  .context{width:100%;color:var(--muted);font-size:.9rem;margin-left:58px;margin-top:-7px}
+  .section{border-top:1px solid var(--border);padding-top:19px;margin-top:4px}
+  .section-title{display:flex;align-items:center;gap:10px;font-family:'IBM Plex Serif',serif;font-size:1.05rem;font-weight:600;margin-bottom:12px}
+  .section-icon{font-size:1.45rem;color:#8de2bb}
+  .actions{margin:0;padding-left:25px;color:var(--text)}
+  .actions li{padding:4px 0;color:#e9eee9;font-size:.94rem}
+  .actions li::marker{color:var(--gold)}
+  .source-text{color:var(--muted);font-size:.91rem;margin-left:42px}
+  .evidence-trace{
+  border:1px solid var(--border);
+  margin-top:16px;
+  padding:14px 16px;
+  border-radius:10px;
+}
+  .notice{border-top:1px solid var(--border);margin-top:20px;padding-top:17px;color:var(--muted);font-size:.83rem;display:flex;gap:10px;align-items:flex-start}
+  .notice-icon{font-size:1.35rem;color:var(--muted);line-height:1}
+  .loading,.empty{color:var(--muted);font-size:.92rem;padding:22px 4px}
+  .error{color:var(--high);font-size:.9rem}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Agriguard</h1></header>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Farmer input</h2>
+
+      <label for="crop">Crop</label>
+      <select id="crop"></select>
+
+      <label for="region">Region</label>
+      <div class="row">
+        <input type="text" id="region" value="Jodhpur, Rajasthan">
+        <button class="secondary" id="weatherBtn" onclick="fetchWeather()">Fetch live weather</button>
+      </div>
+      <div class="weather-status" id="weatherStatus">No weather fetched yet.</div>
+
+      <label for="symptom">Observed symptoms (optional)</label>
+      <textarea id="symptom" placeholder="e.g. yellow powdery patches on leaves"></textarea>
+
+      <button class="primary" id="advisoryBtn" onclick="runAgent()">Get advisory</button>
+    </section>
+
+    <section class="panel advisory-panel">
+      <h2>Crop advisory</h2>
+      <div id="result" class="empty">Fill in the form and click “Get advisory” to generate a recommendation.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const DOCS = [
+  {crop:"wheat",title:"Wheat — Yellow Stripe Rust",source:"ICAR Wheat Advisory, Sec. 4.2 — Fungal Disease Management",keywords:["yellow","stripe","rust","powder","streak","leaf"],severity:3,favorable:{minRH:65,maxRH:100,minTemp:10,maxTemp:20},action:"Apply propiconazole-based fungicide at first sign of yellow pustules. Improve field drainage to reduce leaf-surface moisture."},
+
+  {crop:"wheat",title:"Wheat — Aphid Infestation",source:"ICAR Wheat Advisory, Sec. 2.5 — Sucking Pest Management",keywords:["aphid","curl","sticky","honeydew","cluster"],severity:2,favorable:{minRH:0,maxRH:45,minTemp:5,maxTemp:20},action:"Set up yellow sticky traps. Apply insecticidal soap or neem spray if aphid clusters exceed threshold on lower leaves."},
+
+  {crop:"cotton",title:"Cotton — Bollworm Infestation",source:"State Agriculture Dept. Pest Bulletin — Cotton, Sec. 2.1",keywords:["boll","larvae","hole","worm","bore"],severity:3,favorable:{minRH:0,maxRH:45,minTemp:30,maxTemp:42},action:"Install pheromone traps at 5 per acre. Apply neem-based spray during early flowering; monitor twice weekly through boll formation."},
+
+  {crop:"cotton",title:"Cotton — Leaf Curl Virus",source:"State Agriculture Dept. Pest Bulletin — Cotton, Sec. 3.4",keywords:["curl","vein","thickening","yellow","whitefly"],severity:3,favorable:{minRH:0,maxRH:50,minTemp:28,maxTemp:40},action:"Control whitefly vector with yellow sticky traps and neem oil. Remove and destroy infected plants early to limit spread."},
+
+  {crop:"rice",title:"Rice — Brown Planthopper",source:"ICAR Rice Advisory, Sec. 3.4 — Insect Pest Management",keywords:["brown","hopper","yellowing","wilting","hopperburn"],severity:3,favorable:{minRH:75,maxRH:100,minTemp:25,maxTemp:32},action:"Avoid excess nitrogen application. Drain the field intermittently to disrupt hopper breeding; use resistant varieties where available."},
+
+  {crop:"rice",title:"Rice — Blast Disease",source:"ICAR Rice Advisory, Sec. 4.1 — Fungal Disease Management",keywords:["blast","spindle","lesion","neck","gray spot"],severity:3,favorable:{minRH:70,maxRH:100,minTemp:20,maxTemp:28},action:"Apply tricyclazole fungicide at early lesion stage. Avoid dense planting and excess nitrogen, which favor blast spread."},
+
+  {crop:"tomato",title:"Tomato — Early Blight",source:"State Agriculture Dept. Pest Bulletin — Tomato, Sec. 1.3",keywords:["blight","brown spot","leaf","wilt","yellow","spot"],severity:2,favorable:{minRH:70,maxRH:100,minTemp:20,maxTemp:28},action:"Remove and destroy infected lower leaves. Apply copper-based fungicide; rotate with a non-solanaceous crop next season."},
+
+  {crop:"tomato",title:"Tomato — Leaf Curl Virus",source:"State Agriculture Dept. Pest Bulletin — Tomato, Sec. 2.2",keywords:["curl","stunt","whitefly","mosaic","yellowing"],severity:3,favorable:{minRH:0,maxRH:45,minTemp:28,maxTemp:38},action:"Control whitefly vector early with yellow sticky traps. Remove infected seedlings promptly; use virus-resistant varieties next season."},
+
+  {crop:"maize",title:"Maize — Fall Armyworm",source:"State Agriculture Dept. Pest Bulletin — Maize, Sec. 1.1",keywords:["armyworm","whorl","holes","larvae","frass"],severity:3,favorable:{minRH:0,maxRH:55,minTemp:28,maxTemp:36},action:"Scout whorls weekly for egg masses and frass. Apply targeted biopesticide (e.g. Bt-based spray) at early larval stage."},
+
+  {crop:"maize",title:"Maize — Stem Borer",source:"State Agriculture Dept. Pest Bulletin — Maize, Sec. 1.4",keywords:["borer","deadheart","stem","tunneling"],severity:2,favorable:{minRH:40,maxRH:70,minTemp:25,maxTemp:33},action:"Remove and destroy deadheart shoots. Release Trichogramma parasitoids at early egg-laying stage as biological control."},
+
+  {crop:"groundnut",title:"Groundnut — Tikka Leaf Spot",source:"ICAR Groundnut Advisory, Sec. 2.3 — Fungal Disease Management",keywords:["leaf spot","tikka","brown circular","defoliation"],severity:2,favorable:{minRH:70,maxRH:100,minTemp:20,maxTemp:30},action:"Apply chlorothalonil or mancozeb fungicide at first spot appearance. Avoid dense sowing to improve canopy air circulation."},
+
+  {crop:"groundnut",title:"Groundnut — Rust",source:"ICAR Groundnut Advisory, Sec. 2.6 — Fungal Disease Management",keywords:["rust","orange pustule","powdery","leaf"],severity:2,favorable:{minRH:75,maxRH:100,minTemp:20,maxTemp:30},action:"Apply hexaconazole fungicide at pustule onset. Remove volunteer plants that can carry rust between seasons."},
+
+  {crop:"mustard",title:"Mustard — Aphid Infestation",source:"ICAR Mustard Advisory, Sec. 2.2 — Sucking Pest Management",keywords:["aphid","curling","sticky","honeydew","cluster"],severity:2,favorable:{minRH:0,maxRH:45,minTemp:0,maxTemp:20},action:"Set up yellow sticky traps at crop-canopy height. Apply insecticidal soap spray; monitor closely during December–January flowering."},
+
+  {crop:"sugarcane",title:"Sugarcane — Red Rot",source:"ICAR Sugarcane Advisory, Sec. 3.1 — Fungal Disease Management",keywords:["red","rot","stalk","sett","reddening"],severity:3,favorable:{minRH:75,maxRH:100,minTemp:26,maxTemp:34},action:"Use disease-free setts for planting. Remove and burn infected clumps promptly to prevent spread through irrigation water."},
+
+  {crop:"chili",title:"Chili — Thrips & Leaf Curl",source:"State Agriculture Dept. Pest Bulletin — Chili, Sec. 1.2",keywords:["curl","thrips","mottled","stunt"],severity:2,favorable:{minRH:0,maxRH:40,minTemp:30,maxTemp:40},action:"Apply blue sticky traps for thrips monitoring. Use neem-based spray early; avoid excess nitrogen which increases susceptibility."},
+
+  {crop:"potato",title:"Potato — Late Blight",source:"ICAR Potato Advisory, Sec. 4.4 — Fungal Disease Management",keywords:["blight","water-soaked","blackening","wilt"],severity:3,favorable:{minRH:80,maxRH:100,minTemp:15,maxTemp:20},action:"Apply metalaxyl-mancozeb fungicide preventively before symptoms appear during cool, humid spells. Ensure field drainage."}
+];
+const CROP_LABELS={wheat:"Wheat",cotton:"Cotton",rice:"Rice",tomato:"Tomato",maize:"Maize",groundnut:"Groundnut",mustard:"Mustard",sugarcane:"Sugarcane",chili:"Chili",potato:"Potato"};
+const cropSelect=document.getElementById("crop");
+Object.entries(CROP_LABELS).forEach(([value,label])=>{const o=document.createElement("option");o.value=value;o.textContent=label;cropSelect.appendChild(o)});
+
+let liveWeather=null;
+
+async function fetchWeather(){
+  const region=document.getElementById("region").value.trim();
+  const status=document.getElementById("weatherStatus");
+  const btn=document.getElementById("weatherBtn");
+  if(!region){status.textContent="Enter a region first.";status.className="weather-status err";return}
+  btn.disabled=true;status.textContent="Looking up weather…";status.className="weather-status";
+  try{
+    const geoQuery=region.split(",")[0].trim();
+    const geoRes=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(geoQuery)+"&count=1");
+    const geoData=await geoRes.json();
+    if(!geoData.results?.length)throw new Error("Location not found");
+    const loc=geoData.results[0];
+    const wRes=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+loc.latitude+"&longitude="+loc.longitude+"&current=temperature_2m,relative_humidity_2m,precipitation");
+    const wData=await wRes.json();
+    if(!wData.current)throw new Error("Weather unavailable");
+    liveWeather={temp:wData.current.temperature_2m,humidity:wData.current.relative_humidity_2m,rainfall:wData.current.precipitation,locationName:loc.name+(loc.country?", "+loc.country:"")};
+    status.innerHTML=`<span class="weather-line"><span class="sun">☀</span> Live: ${liveWeather.temp}°C, ${liveWeather.humidity}% RH, ${liveWeather.rainfall}mm rain — ${escapeHtml(liveWeather.locationName)}</span>`;
+    status.className="weather-status live";
+  }catch(err){liveWeather=null;status.textContent="Live weather unavailable — the advisory will use the safe default fallback.";status.className="weather-status err"}
+  finally{btn.disabled=false}
+}
+
+function isFavorable(weather,f){return weather.humidity>=f.minRH&&weather.humidity<=f.maxRH&&weather.temp>=f.minTemp&&weather.temp<=f.maxTemp}
+function riskLabel(score){if(score<=0)return{label:"Low",cls:"risk-low"};if(score===1)return{label:"Medium",cls:"risk-med"};return{label:"High",cls:"risk-high"}}
+function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function actionsFromGuidance(text){return text.split(/\.(?=\s|$)/).map(s=>s.trim()).filter(Boolean).slice(0,4)}
+
+async function runAgent(){
+  const crop=cropSelect.value;
+  const region=document.getElementById("region").value.trim()||"your region";
+  const symptom=document.getElementById("symptom").value.trim().toLowerCase();
+  const result=document.getElementById("result");
+  const btn=document.getElementById("advisoryBtn");
+  btn.disabled=true;
+  result.className="loading";
+  result.textContent="Retrieving evidence and generating your advisory…";
+
+  let weather=liveWeather;
+  if(!weather){weather={temp:24,humidity:50,rainfall:5,locationName:region};}
+
+const retrievalResponse=await fetch("/api/semantic-retrieve",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+    crop,
+    symptom,
+    weather:{
+      temp:weather.temp,
+      humidity:weather.humidity,
+      rainfall:weather.rainfall
+    },
+    documents:DOCS
+  })
+});
+
+const retrievalData=await retrievalResponse.json();
+
+if(!retrievalResponse.ok){
+  throw new Error(retrievalData.error||"Semantic retrieval failed");
+}
+
+const candidates=retrievalData.candidates.map(doc=>({
+  doc,
+  similarity:doc.similarity,
+  severity:Number(
+    doc.severity ??
+    DOCS.find(d=>d.title===doc.title)?.severity ??
+    1
+  ),
+  favorable:isFavorable(weather,doc.favorable)
+}));
+
+if(!candidates.length){
+  result.className="empty";
+  result.innerHTML=`
+    <h3>No reliable match found</h3>
+    <p>The available agricultural evidence does not sufficiently match the symptoms you reported.</p>
+    <p>Please provide more details about the leaf, stem, fruit, insects, spots, or other visible symptoms.</p>
+  `;
+  btn.disabled=false;
+  return;
+}
+
+  let top=candidates[0];
+let confidence=Math.max(0,Math.min(1,Number(top.similarity)||0));
+let selectionReason="Selected from the highest semantic similarity among the retrieved agricultural evidence.";
+
+if(!top || top.similarity < 0.70){
+  result.className="empty";
+  result.innerHTML=`
+    <h3>No reliable match found</h3>
+    <p>The available agricultural evidence does not sufficiently match the symptoms you reported.</p>
+    <p>Please provide more details about the leaf, stem, fruit, insects, spots, or other visible symptoms.</p>
+  `;
+  btn.disabled=false;
+  return;
+}
+  const effectiveSeverity = top.similarity >= 0.75
+  ? top.severity
+  : Math.min(top.severity, 2);
+
+const riskScore=Math.min(2,
+  (effectiveSeverity-1) +
+  (top.favorable ? 1 : 0)
+);
+
+const risk=riskLabel(riskScore);
+
+const riskFactors=[
+  `Baseline severity: ${top.severity===3?"High":top.severity===2?"Medium":"Low"}`,
+  `Evidence similarity: ${Math.round(top.similarity*100)}%${top.similarity>=0.75?" ✓ Strong":" ⚠ Limited"}`,
+  `Weather compatibility: ${top.favorable?"✓ Favorable":"⚠ Not favorable"}`
+];
+
+  const similarity=Math.round(top.similarity*100);
+
+  let advisory=null;
+  try{
+    const response=await fetch("/api/advisory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({crop,symptom,weather:{temp:weather.temp,humidity:weather.humidity,rainfall:weather.rainfall},selectedDocument:{title:top.doc.title,source:top.doc.source,action:top.doc.action},risk:risk.label,confidence})});
+    const data=await response.json();
+    if(response.ok)advisory=data;
+  }catch(err){console.warn("AI advisory unavailable; retrieved guidance fallback used.",err)}
+
+  const actions=advisory?.actions?.length?advisory.actions:actionsFromGuidance(top.doc.action);
+  const summary=advisory?.summary||`The available evidence indicates a ${risk.label.toLowerCase()} risk associated with ${top.doc.title}. This is a risk indication, not a confirmed diagnosis.`;
+  const caution=advisory?.caution||"This is a risk indication, not a confirmed diagnosis. For severe infestations or uncertain cases, consult your local agriculture expert.";
+
+  result.className="";
+  result.innerHTML=`
+    <div class="advisory-card">
+      <div class="risk-row">
+        <div class="leaf">◢</div>
+        <div class="risk-badge ${risk.cls}">${risk.label} risk</div>
+        <div class="disease-title">${escapeHtml(top.doc.title)}</div>
+        <div style="font-size:.85rem;color:var(--muted);margin-top:6px">
+          Evidence similarity: ${similarity}%
+        </div>
+        <div class="context">${escapeHtml(region)} &nbsp; | &nbsp; ${escapeHtml(weather.temp)}°C, ${escapeHtml(weather.humidity)}% RH, ${escapeHtml(weather.rainfall)}mm rain</div>
+      </div>
+
+      <div class="evidence-trace">
+  <div class="section-title">
+    <span class="section-icon">◈</span>
+    Evidence used
+  </div>
+  <ul class="actions">
+    <li>Crop match: ✓ ${escapeHtml(crop)}</li>
+    <li>Evidence similarity: ${similarity}%</li>
+    <li>Weather compatibility: ${top.favorable ? "✓ Compatible" : "Not favorable"}</li>
+    <li>Baseline severity: ${riskFactors[0].replace("Baseline severity: ","")}</li>
+    <li>Risk evidence: ${riskFactors[1].replace("Evidence similarity: ","")}</li>
+    <li>Weather factor: ${riskFactors[2].replace("Weather compatibility: ","")}</li>
+    <li>Selection reason: ${escapeHtml(selectionReason)}</li>
+  </ul>
+  <div class="source-text">${escapeHtml(top.doc.source)}</div>
+</div>
+
+      <div class="section">
+        <div class="section-title"><span class="section-icon">◢</span> Recommended actions</div>
+        <ul class="actions">${actions.map(a=>`<li>${escapeHtml(a)}</li>`).join("")}</ul>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="section-icon">▣</span> Source</div>
+        <div class="source-text">${escapeHtml(top.doc.source)}</div>
+      </div>
+    </div>
+
+    <div class="notice">
+      <span class="notice-icon">ⓘ</span>
+      <span>${escapeHtml(caution)}<br>${escapeHtml(summary)}</span>
+    </div>`;
+  btn.disabled=false;
+}
+</script>
+</body>
+</html>
